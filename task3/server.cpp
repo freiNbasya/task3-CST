@@ -43,9 +43,21 @@ void handleClient(SOCKET clientSocket) {
 		buffer[bytesReceived] = '\0';
 		std::string message(buffer);
 
+		if (message.substr(0, 7) == "REJOIN_") {
+			int newRoom = std::stoi(message.substr(7));
+			if (newRoom >= 1 && newRoom <= 3) {
+				std::lock_guard<std::mutex> lock(consoleMutex);
+				std::cout << "Client " << clientSocket << " rejoined room " << newRoom << std::endl;
+				for (size_t i = 0; i < clients.size(); ++i) {
+					room = newRoom;
+					if (clients[i].socket == clientSocket) clients[i].room = newRoom;
+				}
 
+			}
+		}
+		else {
 			broadcastMessage(message, clientSocket, room);
-		
+		}
 	}
 	closesocket(clientSocket);
 
