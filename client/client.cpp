@@ -51,6 +51,7 @@ int main() {
     send(clientSocket, roomID.c_str(), roomID.size() + 1, 0);
     std::thread receiveThread(receiveMessages, clientSocket);
     std::string message;
+
     while (true) {
         std::getline(std::cin, message);
         send(clientSocket, message.c_str(), message.size() + 1, 0);
