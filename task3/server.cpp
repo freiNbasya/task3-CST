@@ -9,6 +9,7 @@
 #pragma comment(lib, "ws2_32.lib")
 
 std::mutex consoleMutex;
+std::mutex clientsMutex;
 
 struct Client {
     SOCKET socket;
@@ -22,7 +23,6 @@ struct Message {
     SOCKET senderSocket;
     int room;
 };
-
 std::mutex messageQueueMutex;
 std::condition_variable messageAvailableCondition;
 std::queue<Message> messageQueue;
@@ -55,6 +55,11 @@ void broadcastMessages() {
     }
 }
 
+void addClient(SOCKET clientSocket, int room) {
+    std::lock_guard<std::mutex> lock(clientsMutex);
+    clients.push_back({ clientSocket, room });
+}
+
 void handleClient(SOCKET clientSocket) {
     char buffer[4096];
     int room = -1;
@@ -66,7 +71,7 @@ void handleClient(SOCKET clientSocket) {
         std::cout << "Client " << clientSocket << " connected to room " << room << std::endl;
     }
 
-    clients.push_back({ clientSocket, room });
+    addClient(clientSocket, room);
 
     while (true) {
         bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
