@@ -36,9 +36,12 @@ void addMessageToQueue(const Message& message) {
 void broadcastMessage(const std::string& message, SOCKET senderSocket, int room) {
     std::lock_guard<std::mutex> lock(consoleMutex);
     std::cout << "Client " << senderSocket << ": " << message << std::endl;
-    for (const Client& client : clients) {
-        if (client.socket != senderSocket && client.room == room) {
-            send(client.socket, message.c_str(), message.size() + 1, 0);
+    {
+        std::lock_guard<std::mutex> lock(clientsMutex);
+        for (const Client& client : clients) {
+            if (client.socket != senderSocket && client.room == room) {
+                send(client.socket, message.c_str(), message.size() + 1, 0);
+            }
         }
     }
 }
@@ -89,9 +92,12 @@ void handleClient(SOCKET clientSocket) {
             if (newRoom >= 1 && newRoom <= 3) {
                 std::lock_guard<std::mutex> lock(consoleMutex);
                 std::cout << "Client " << clientSocket << " rejoined room " << newRoom << std::endl;
-                for (size_t i = 0; i < clients.size(); ++i) {
-                    room = newRoom;
-                    if (clients[i].socket == clientSocket) clients[i].room = newRoom;
+                {
+                    std::lock_guard<std::mutex> lock(clientsMutex);
+                    for (size_t i = 0; i < clients.size(); ++i) {
+                        room = newRoom;
+                        if (clients[i].socket == clientSocket) clients[i].room = newRoom;
+                    }
                 }
             }
         }
